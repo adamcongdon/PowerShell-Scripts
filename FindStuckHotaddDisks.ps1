@@ -5,13 +5,7 @@
 Add-PSSnapin VeeamPSSnapin
 
 #get list of proxies and pull the name
-$serverList = Get-VBRViProxy
-$hotAddProxies = $serverList.IsHotAddEnabled()
-if($hotAddProxies = $true)
-    {
-        $proxynameList = $serverList.name
-    }
-
+$serverList = Get-VBRViProxy | Where-Object {$_.ChassisType -eq "ViVirtual"}
 $vbrServer = Get-VBRLocalhost
 
 #Menu to pick with PowerCLI version to use
@@ -85,74 +79,35 @@ $vcenter = Read-Host -Prompt "Please enter your VC or host name"
 connect-viserver -Server $vcenter
 
 #Get Proxy disk list
-foreach ($vm in $proxynameList)
+foreach ($vm in $serverList.host.name)
 {
-    if($vm -ne $null)
-    {
-        Try
-            {
-                $vmwVM = Get-VM -Name $vm -ErrorAction SilentlyContinue
-                Write-Host "`nDisk list for proxy $vmwVM" -ForegroundColor Green
-                $disks = Get-HardDisk -vm $vmwVM
-                foreach($vdisk in $disks)
-                    {
-                        Write-Host $vdisk.Filename
-                    }
-            
-            }
-        Catch
-            {
-                Try
-                    {
-                        $vmwVM = Resolve-DnsName -Name $vm
-                        Write-Host "`nDisk list for proxy $vmwVM" -ForegroundColor Green
-                        $disks = Get-HardDisk -vm $vmwVM
-                        foreach($vdisk in $disks)
-                            {
-                                Write-Host $vdisk.Filename
-                            }
-                    }
-                Catch
-                    {
-                        Try
-                            {
+    $DNS = Resolve-DnsName -Name $vm -ErrorAction Ignore
 
-                            }
-                        Catch
-                            {
-
-                            }
-                    }
-            }
-    }
+    #$vmName = Get-VM | Where-Object -FilterScript { $_.Guest.Hostname -contains $DNS.name }
+    if(($vmName = Get-VM | Where-Object -FilterScript { $_.Guest.Hostname -contains $DNS.name }) -ne $null)
+                {
+                    Write-Host "`nDisk list for proxy $vmName" -ForegroundColor Green
+                    $disks = Get-HardDisk -vm $vmName
+                    foreach($vdisk in $disks)
+                        {
+                            Write-Host $vdisk.Filename
+                        }
+                }
+        
+    #$viIP = Get-VM | Where-Object -FilterScript {$_.Guest.IPAddress -contains $DNS.IP4Address[0]}
+    elseif(($viIP = Get-VM | Where-Object -FilterScript {$_.Guest.IPAddress -contains $DNS.IP4Address[0]})-ne $null)
+                        {
+                            Write-Host "`nDisk list for proxy $viIP" -ForegroundColor Green
+                            $disks = Get-HardDisk -VM $viIP
+                            foreach($disk in $disks)
+                                {
+                                    Write-Host $disk.Filename
+                                }
+                        }
     else
     {
-        Write-Host "salmon" -ForegroundColor Magenta
-
-
+        break
     }
-}
+     
 
-#Get Veeam Server Disks
-#Write-Host "'`n'Found Veeam Server Disk:" -ForegroundColor Green
-Try
-{
-    $vbrShortName = ((gwmi Win32_ComputerSystem).Name).Split(".")[0]
-    #$disklist = Get-HardDisk -VM $vbrShortName
-    Write-Host "`nDisk List for Veeam Server:" -ForegroundColor Green
-    $disk = Get-HardDisk -VM $vbrShortName
-    foreach($vmdk in $disk)
-        {
-            Write-Host $vmdk.Filename
-        }
-    
-    #    if ($disklist.Filename -contains "*'$vbrShortName'*")
-    #    {
-    #        Write-Host $disklist.Filename
-    #    }
-    
 }
-Catch
-{
-    Write-Host "Cannot Resolve Veeam Backup Server to suitable VMware VIrtual Proxy" -ForegroundColor Green
-}  
