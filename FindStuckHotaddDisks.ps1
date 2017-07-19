@@ -3,10 +3,6 @@
 #add the snapin for Veeam
     Add-PSSnapin VeeamPSSnapin
 
-#get list of proxies and pull the name
-    $serverList = Get-VBRViProxy | Where-Object {$_.ChassisType -eq "ViVirtual"}
-    $vbrServer = Get-VBRLocalhost
-
 #Menu to pick with PowerCLI version to use
     $title = "Select PowerCLI Version"
     $message = "Pick which PowerCLI version you have installed `n Mouse over the option for Details"
@@ -78,30 +74,27 @@
     connect-viserver -Server $vcenter
 
 #Get Proxy disk list to display in window for viewing.
-    Write-Host "Checking Proxies, please wait"
-    foreach ($vm in $serverList.host.name)
-    {
-        $DNS = Resolve-DnsName -Name $vm -ErrorAction Ignore
-        if(($vmName = Get-VM | Where-Object -FilterScript { $_.Guest.Hostname -contains $DNS.name }) -ne $null)
-                    {
-                        Write-Host "`nDisk list for proxy $vmName" -ForegroundColor Green
-                        $disks = Get-HardDisk -vm $vmName
-                        foreach($vdisk in $disks)
-                            {
-                                Write-Host $vdisk.Filename
-                            }
-                    }
-        elseif(($viIP = Get-VM | Where-Object -FilterScript {$_.Guest.IPAddress -contains $DNS.IP4Address[0]})-ne $null)
-                            {
-                                Write-Host "`nDisk list for proxy $viIP" -ForegroundColor Green
-                                $disks = Get-HardDisk -VM $viIP
-                                foreach($disk in $disks)
-                                    {
-                                        Write-Host $disk.Filename
-                                    }
-                            }
-        else
+    Write-Host "Checking Proxies, please note this time table is relative to total VM count" -ForegroundColor Green
+    $VeeamProxyList = Get-VBRViProxy | Where-Object {$_.ChassisType -eq "ViVirtual"} | Resolve-DnsName -Name {$_.host.name}
+    $VMwareProxyList = Get-VM | select Name, {$_.Guest.Hostname}
+    
+    $trueProxyList = @()
+    
+    foreach($viVM in $VMwareProxyList.'$_.guest.hostname')
         {
-            break
+            if ($VeeamProxyList.name -contains $viVM)
+                {
+                    $matchedlist = $VMwareProxyList -match $viVM
+                    $trueProxyList += $matchedlist
+                }
         }
-    }
+    foreach($trueProxy in $trueProxyList.name)
+        {
+            Write-Host "`nDisk list for proxy $trueProxy" -ForegroundColor Green
+            $disks = Get-HardDisk -vm $trueproxy
+            foreach($vdisk in $disks)
+                {
+                    Write-Host $vdisk.Filename
+                }
+        }
+    
