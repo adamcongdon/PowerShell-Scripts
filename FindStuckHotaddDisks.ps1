@@ -1,7 +1,9 @@
 ﻿#Written by Adam Congdon (adam.congdon@veeam.com)
 # Requires server 2012 + as some CMDlets are not present in prior versions.
+# Must be ran on a server with Veeam Backup Console installed
+# Must have PowerCLI installed
 
-#add the snapin for Veeam
+#add the snapin for Veeam and connect to VBR Server
     Try
         {
             Get-PSSnapin -Registered Veeam* | Add-PSSnapin
@@ -23,8 +25,7 @@
             exit
         }
 
-#Menu to pick with PowerCLI version to use
-    $title = "Select PowerCLI Version"
+# Add PowerCLI Module or Snapin
     Try
         {
             Get-PsSnapin -registered -erroraction SilentlyContinue | Add-PsSnapin -ErrorAction SilentlyContinue
@@ -43,15 +44,12 @@
             exit
         }
                             
-        
-         
-
-
 #connect to VC by asking for user's VC
     $vcenter = Read-Host -Prompt "Please enter your VC or host name"
     connect-viserver -Server $vcenter
 
-#Get Proxy disk list to display in window for viewing.
+# Gather Proxy and VM list > Compare to find Proxy VM > Find IndependentNonPersistent disks
+# Prompt if user would like to remove the disk with double confirmation.
     Write-Host "`nGathering Proxy List. Please note this time table is relative to infrastructure size" -ForegroundColor Green
     $VeeamProxyList = Get-VBRViProxy | Where-Object {$_.ChassisType -eq "ViVirtual"} | Resolve-DnsName -Name {$_.host.name}
     $VMwareProxyList = Get-VM | select Name, {$_.Guest.Hostname}
