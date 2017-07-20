@@ -77,5 +77,15 @@
             foreach($vdisk in $disks)
                 {
                     Write-Host `n $vdisk.persistence `t $vdisk.filename
+                    $input = Read-Host "'nRemove disk from proxy? Yes or No"
+                    while("yes","no" -notcontains $input)
+                        {
+                            $input = Read-Host "'nRemove disk from proxy? Yes or No"
+                        }
+                    switch($input)
+                        {
+                            Yes { Remove-HardDisk $vdisk -Confirm}
+                            No {}
+                        }
                 }
-        }           
+        }    
