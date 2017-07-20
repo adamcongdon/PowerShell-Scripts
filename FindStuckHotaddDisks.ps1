@@ -6,17 +6,17 @@
 #add the snapin for Veeam and connect to VBR Server
     Try
         {
-            Get-PSSnapin -Registered Veeam* | Add-PSSnapin
+            Get-PSSnapin -Registered Veeam* -ErrorAction stop | Add-PSSnapin
         }
     Catch 
         {
             Write-host "Cannot add Veeam PS Snapin. Is Veeam Console installed locally?" -foregroundcolor red
             exit
         }
-    $vbrServer = Read-Host -Prompt "Please Enter Veeam Backup Server you wish to connect or use localhost to connect locally."
+    $vbrServer = Read-Host -Prompt "Please Enter Veeam Backup Server you wish to connect or use localhost to connect locally"
     Try
         {
-            Disconnect-VBRServer #This is to ensure connections are cleared to prevent failure/duplicate connections to VBRServer
+            Disconnect-VBRServer -ErrorAction SilentlyContinue #This is to ensure connections are cleared to prevent failure/duplicate connections to VBRServer
             Connect-VBRServer -Server $vbrServer -ErrorAction Stop
         }
     Catch
@@ -32,7 +32,8 @@
         }
     Catch
         {
-            $Error
+            Write-Host $Error[0] -ForegroundColor Red
+            exit
         }
     Try
         {
@@ -40,7 +41,7 @@
         }
     Catch
         {
-            write-host $Error
+            Write-Host $Error[0] -ForegroundColor Red
             exit
         }
                             
