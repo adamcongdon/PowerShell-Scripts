@@ -52,7 +52,7 @@
     connect-viserver -Server $vcenter
 
 #Get Proxy disk list to display in window for viewing.
-    Write-Host "`nChecking Proxies, please note this time table is relative to total VM count" -ForegroundColor Green
+    Write-Host "`nGathering Proxy List. Please note this time table is relative to infrastructure size" -ForegroundColor Green
     $VeeamProxyList = Get-VBRViProxy | Where-Object {$_.ChassisType -eq "ViVirtual"} | Resolve-DnsName -Name {$_.host.name}
     $VMwareProxyList = Get-VM | select Name, {$_.Guest.Hostname}
     
@@ -68,11 +68,14 @@
         }
     foreach($trueProxy in $trueProxyList.name)
         {
-            Write-Host "`nDisk list for proxy $trueProxy" -ForegroundColor Green
-            $disks = Get-HardDisk -vm $trueproxy
+            $disks = Get-HardDisk -vm $trueproxy | where {$_.Persistence -like "*IndependentNon*"}
+            if($disks -eq $null) {Write-Host "No foreign disks found on $trueProxy"}
+            else
+                {
+                    Write-Host "`nDisk list for proxy $trueProxy" -ForegroundColor Green
+                }
             foreach($vdisk in $disks)
                 {
-                    Write-Host $vdisk.Filename
+                    Write-Host `n $vdisk.persistence `t $vdisk.filename
                 }
-        }
-
+        }           
