@@ -88,3 +88,8 @@
                         }
                 }
         }    
+#Log output
+	$trueProxyList | Out-File 'StuckHotaddDisks.log'
+    Add-Content 'StuckHotaddDisks.log' 'Disks:'
+	$disks | Out-File 'StuckHotaddDisks.log' -Append
+    if($disks -eq $null) {Add-Content 'StuckHotaddDisks.log' "No foreign disks found"}        
