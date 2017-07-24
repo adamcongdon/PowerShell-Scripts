@@ -3,6 +3,10 @@
 # Must be ran on a server with Veeam Backup Console installed
 # Must have PowerCLI installed
 
+$logName = "HotaddDiskFinder_" + (Get-Date).tostring("dd-MM-yyyy-hh-mm-ss") + ".log"
+$logFile = New-Item -Path C:\ -Name $logName -ItemType "file"
+Start-Transcript -Append $logFile -Verbose -IncludeInvocationHeader
+
 #add the snapin for Veeam and connect to VBR Server
     Try
         {
@@ -47,6 +51,7 @@
                             
 #connect to VC by asking for user's VC
     $vcenter = Read-Host -Prompt "Please enter your VC or host name"
+    Add-Content $logFile $vcenter -ErrorAction SilentlyContinue
     connect-viserver -Server $vcenter
 
 # Gather Proxy and VM list > Compare to find Proxy VM > Find IndependentNonPersistent disks
@@ -71,15 +76,17 @@
             if($disks -eq $null) {Write-Host "No foreign disks found on $trueProxy"}
             else
                 {
-                    Write-Host "`nDisk list for proxy $trueProxy" -ForegroundColor Green
+                    Write-Host "`nDisk list for proxy $trueProxy" -ForegroundColor Green | ac $logFile
                 }
             foreach($vdisk in $disks)
                 {
                     Write-Host `n $vdisk.persistence `t $vdisk.filename
                     $input = Read-Host "'nRemove disk from proxy? Yes or No"
+                    Add-Content $logFile $input -ErrorAction SilentlyContinue
                     while("yes","no" -notcontains $input)
                         {
-                            $input = Read-Host "'nRemove disk from proxy? Yes or No"
+                            $input = Read-Host "`nRemove disk from proxy? Yes or No"
+                            
                         }
                     switch($input)
                         {
@@ -88,3 +95,5 @@
                         }
                 }
         }    
+Stop-Transcript
+ac $logFile $Error
