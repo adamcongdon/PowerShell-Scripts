@@ -1,5 +1,5 @@
 ﻿#Written by Adam Congdon (adam.congdon@veeam.com)
-# Requires server 2012 + as some CMDlets are not present in prior versions.
+# Works best in Powershell 5+, works in 4 > not tested below 4
 # Must be ran on a server with Veeam Backup Console installed
 # Must have PowerCLI installed
 
