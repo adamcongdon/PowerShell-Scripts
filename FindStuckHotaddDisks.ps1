@@ -1,8 +1,9 @@
 ﻿#Written by Adam Congdon (adam.congdon@veeam.com)
-# Works best in Powershell 5+, works in 4 > not tested below 4
+#Requires -Version 4
 # Must be ran on a server with Veeam Backup Console installed
 # Must have PowerCLI installed
 
+# initialize Logging
 $logName = "HotaddDiskFinder_" + (Get-Date).tostring("dd-MM-yyyy-hh-mm-ss") + ".log"
 $logFile = New-Item -Path C:\ -Name $logName -ItemType "file"
 Start-Transcript -Append $logFile -Verbose -IncludeInvocationHeader
